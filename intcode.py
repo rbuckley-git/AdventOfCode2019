@@ -1,3 +1,8 @@
+# https://adventofcode.com/
+#
+# Implementation of the challage intcode computer as a class as it was needed for challenge 7
+#
+
 import unittest
 
 class computer:
