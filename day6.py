@@ -1,6 +1,6 @@
 # https://adventofcode.com/
 # 7/12/2019
-# Day 7
+# Day 6
 #
 # Good test of map knowledge etc
 #
