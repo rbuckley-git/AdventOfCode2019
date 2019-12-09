@@ -2,7 +2,7 @@
 # 7/12/2019
 # Day 7
 #
-# This called for significant refactoring of the intcode computer into a separate class.
+# Good test of map knowledge etc
 #
 import unittest
 
