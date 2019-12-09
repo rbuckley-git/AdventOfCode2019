@@ -5,6 +5,14 @@
 
 import unittest
 
+def get_program( filename ):
+    with open( filename ) as fp:
+        line = fp.readline()
+        prog = []
+        for d in line.strip().split(","):
+            prog.append(int(d))
+        return prog
+
 class computer:
     def __init__(self, prog, input = None ):
         self.prog = prog.copy()
