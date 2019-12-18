@@ -17,20 +17,28 @@ class computer:
     def __init__(self, prog, input = None ):
         self.prog = prog.copy()
         self.prog_size = len(self.prog)
-        self.prog.extend([0]*1000)
+        self.additional_memory = {}
         self.pc = 0
         self.relative_base_offset = 0
         self.stopped = False
+        self.paused = False
         self.debugging = False
         self.inputs = []
+        self.input_handler = None
         if input != None:
             self.inputs.append(input)
+
+    def set_input_handler(self,handler):
+        self.input_handler = handler
 
     def set_phase(self, phase):
         self.inputs.insert(0, phase)
 
     def add_input(self, data):
         self.inputs.append(data)
+
+    def is_input_queue_empty(self):
+        return len(self.inputs) == 0
 
     def set_debugging(self, debug):
         self.debugging = debug
@@ -50,13 +58,37 @@ class computer:
     def is_stopped(self):
         return self.stopped
 
+    def is_paused(self):
+        return self.paused
+
+    def set_paused(self,state):
+        self.paused = state
+
+    def halt(self):
+        self.stopped = True
+
+    def get_param_value(self,addr):
+        try:
+            return self.prog[addr]
+        except IndexError:
+            try:
+                return self.additional_memory[addr]
+            except KeyError:
+                self.additional_memory[addr] = 0
+                return 0
+
+
+    def set_param_value(self,addr,value):
+        try:
+            self.prog[addr] = value
+        except IndexError:
+            self.additional_memory[addr] = value
+
     def get_param(self,mode):
         if mode == 0:
             addr = self.prog[self.pc]
             self.pc+=1
-            if addr > len(self.prog):
-                raise Exception("cannot address memory",addr)
-            return self.prog[addr]
+            return self.get_param_value(addr)
 
         if mode == 1:
             a = self.prog[self.pc]
@@ -68,9 +100,7 @@ class computer:
             if self.debugging:
                 print("pc",self.pc,"base offset",self.relative_base_offset,"offset",a)
             self.pc+=1
-            if self.relative_base_offset + a > len(self.prog):
-                raise Exception("cannot address (relative) memory",addr)
-            return self.prog[self.relative_base_offset + a]
+            return self.get_param_value(self.relative_base_offset + a)
 
         raise Exception("illegal addressing mode",mode)
 
@@ -78,7 +108,7 @@ class computer:
         if mode == 0:
             addr = self.prog[self.pc]
             self.pc+=1
-            self.prog[addr] = value
+            self.set_param_value(addr,value)
             return
 
         if mode == 1:
@@ -89,14 +119,20 @@ class computer:
         if mode == 2: 
             rel_addr = self.prog[self.pc]
             self.pc+=1
-            self.prog[self.relative_base_offset + rel_addr] = value
+            self.set_param_value(self.relative_base_offset + rel_addr,value)
             return
 
         raise Exception("illegal addressing mode",mode)
 
 
     def run(self):
+        if self.stopped:
+            return
+
         while True:
+            if self.paused:
+                return
+
             if self.debugging:
                 print("pc",self.pc)
             op,mode1,mode2,mode3 = self.get_op_and_mode( self.prog[self.pc] )
@@ -121,15 +157,18 @@ class computer:
                 self.set_param(mode3,c)
 
             elif ( op == 3):     # input
-                if len(self.inputs) == 0:
-                    raise Exception("program asking for input and none available")
+                if self.input_handler == None:
+                    if len(self.inputs) == 0:
+                        raise Exception("program asking for input and none available")
+                    else:
+                        a = self.inputs.pop(0)
+                        
+                        if self.debugging:
+                            print("using",a,"input",self.inputs)
 
-                a = self.inputs.pop(0)
-                
-                if self.debugging:
-                    print("using",a,"input",self.inputs)
-
-                self.set_param(mode1,a)
+                        self.set_param(mode1,a)
+                else:
+                    self.set_param(mode1,self.input_handler())
 
             elif ( op == 4):     # output
                 a = self.get_param(mode1)
@@ -243,7 +282,7 @@ class AdventTestCase(unittest.TestCase):
     def test_input_output2(self):
         ic = computer([3,9,8,9,10,9,4,9,99,-1,8],8)
         self.assertEqual( ic.run(), 1 )
-    
+
     def test_relative_base(self):
         prog = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
         ic = computer(prog)
