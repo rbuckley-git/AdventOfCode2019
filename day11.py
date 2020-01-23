@@ -2,6 +2,7 @@
 # 11/12/2019
 # Day 11
 #
+# Straightforward once you can rely on an incode computer that did not need modification. Generated some test cases to handle the logic.
 
 import unittest
 import intcode
@@ -38,7 +39,7 @@ def change_direction(current_direction,turn):
     raise Exception("invalid turn instruction",turn)    
 
 
-def emergency_hull_painting_robot():
+def emergency_hull_painting_robot(start_colour = 0):
     # to record the postions that have been painted
     positions_painted = set()
     # to record the current colour of each squart
@@ -50,8 +51,10 @@ def emergency_hull_painting_robot():
     # 0 = black
     # 1 = white
 
-    ic = intcode.computer( intcode.get_program("11.input.txt") )
+    grid[(0,0)] = start_colour
 
+    ic = intcode.computer( intcode.get_program("11.input.txt") )
+    
     while not ic.is_stopped():
         colour = 0                  # default colour for a panel
         if pos in grid:             # lookup colour for panel if we have previously painted it
@@ -73,7 +76,42 @@ def emergency_hull_painting_robot():
         direction = change_direction(direction,turn)
         pos = move_position(pos,direction)
 
-    return len(positions_painted)
+    return len(positions_painted),grid
+
+# max values need to have 1 added to cope with the zero index
+def get_dimensions(grid):
+    maxx = 0
+    maxy = 0
+    for cell in grid.keys():
+        if cell[0] > maxx:
+            maxx = cell[0]
+        if cell[1] > maxy:
+            maxy = cell[1]
+    return maxx+1,maxy+1
+
+def render_grid(grid):
+    size_x,size_y = get_dimensions(grid)
+
+    # initialise an empty canvas
+    lines = []
+    for y in range(size_y):
+        line = []
+        for x in range(size_x):
+            line.append(" ")
+        lines.append( line )
+
+    # paint the canvas with the information from the grid
+    for cell in grid.items():
+        x = cell[0][0]
+        y = cell[0][1]
+        c = cell[1]
+
+        if c==1:
+            lines[y][x] = '#'
+
+    # print out the canvas
+    for y in range(size_y):
+        print(" ".join(lines[y]))
 
 class AdventTestCase(unittest.TestCase):
     def test_direction(self):
@@ -96,5 +134,8 @@ class AdventTestCase(unittest.TestCase):
         self.assertEqual(change_direction_right(">"),"v")
 
 if __name__ == '__main__':
-    panels = emergency_hull_painting_robot()
+    panels,grid = emergency_hull_painting_robot()
     print("Part 1 - number of panels painted",panels)
+    panels,grid = emergency_hull_painting_robot(1)
+    print("Part 2 - number of panels painted",panels)
+    render_grid(grid)

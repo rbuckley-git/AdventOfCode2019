@@ -1,6 +1,14 @@
 # https://adventofcode.com/
 # 13/12/2019
 # Day 13
+#
+# This was quite fun in the end. Was battling for ages with getting the input to the
+# intcode computer at the right time. Eventually considered using a callback to get
+# the input. This worked a treat and intcode was able to request data when it was needed.
+# Ripped some rendering code from the robot painter the other day. Some of the utility
+# code around this solution probably not needed but seemed like a good idea at the time.
+# Brilliant challange.
+#
 
 import unittest
 import intcode
@@ -48,13 +56,13 @@ def render_grid():
         c = cell[1]
 
         if c == 1:              # 1 is a wall tile. Walls are indestructible barriers.
-            lines[y][x] = '1'
+            lines[y][x] = 'W'
         elif c == 3:            # 3 is a horizontal paddle tile. The paddle is indestructible.
-            lines[y][x] = '3'
+            lines[y][x] = '_'
         elif c == 2:            # 2 is a block tile. Blocks can be broken by the ball.
-            lines[y][x] = '2'
+            lines[y][x] = '#'
         elif c == 4:            # 4 is a ball tile. The ball moves diagonally and bounces off objects.
-            lines[y][x] = '4'
+            lines[y][x] = 'o'
 
     # print out the canvas
     for y in range(size_y):
@@ -77,7 +85,7 @@ def update_globals():
 
 def get_input():
     update_globals()
-    #render_grid()
+    render_grid()
     #print("ball",ball,"bat",bat)
 
     # If the joystick is in the neutral position, provide 0.
